@@ -6,6 +6,7 @@ require 'time'
 require 'optparse'
 require 'socket'
 require 'net/http'
+require 'net/https'
 require 'uri'
 
 class NetworkOutput
@@ -22,6 +23,13 @@ class NetworkOutput
                 TCPSocket.new(@url.host, @url.port)
               when 'http'
                 http = Net::HTTP.new(@url.hostname, @url.port)
+                http.keep_alive_timeout = 20
+                http.start
+                http
+              when 'https'
+                http = Net::HTTP.new(@url.hostname, @url.port)
+                http.use_ssl = true
+                http.ca_file = `puppet config print localcacert`.chomp
                 http.keep_alive_timeout = 20
                 http.start
                 http
@@ -46,6 +54,11 @@ class NetworkOutput
       request['Connection'] = 'keep-alive'
       response = @output.request(request, str)
       STDOUT.puts "POST: #{@url} #{response.code}"
+    when 'https'
+      request = Net::HTTP::Post.new(@url)
+      request['Connection'] = 'keep-alive'
+      response = @output.request(request, str)
+      STDOUT.puts "POST: #{@url} #{response.code}"
     end
   end
 
@@ -54,6 +67,8 @@ class NetworkOutput
     when 'tcp'
       @output.close
     when 'http'
+      @output.finish
+    when 'https'
       @output.finish
     end
   ensure
@@ -362,7 +377,7 @@ if $options[:host]
         when 'influxdb'
           raise ArgumentError, '--influx-db must be passsed along with --netcat' unless $options[:influx_db]
           port = $options[:port] || '8086'
-          "http://#{$options[:host]}:#{port}/write?db=#{$options[:influx_db]}&precision=s"
+          "#{$options[:host]}:#{port}/write?db=#{$options[:influx_db]}&precision=s"
         else
           port = $options[:port] || '2003'
           "tcp://#{$options[:host]}:#{port}"
