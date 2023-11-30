@@ -45,12 +45,19 @@ define puppet_metrics_collector::pe_metric (
 
   if empty($override_metrics_command) {
     $base_metrics_command = "${metric_script_file_path} --metrics_type ${metrics_type} --output_dir ${metrics_output_dir}"
-    $metrics_shipping_command = join(['--print |',
-        '/opt/puppetlabs/bin/puppet',
-        'splunk_hec',
-        '--sourcetype puppet:metrics',
-        '--pe_metrics',
-    ], ' ')
+    $metrics_shipping_command = $metrics_server_type ? {
+      'datadog'   => join(['--print |',
+                      '/opt/puppetlabs/bin/puppet',
+                      'datadog_agent',
+                      '--pe_metrics',
+                      ], ' '),
+      'splunk_hec' => join(['--print |',
+                      '/opt/puppetlabs/bin/puppet',
+                      'splunk_hec',
+                      '--sourcetype puppet:metrics',
+                      '--pe_metrics',
+                      ], ' '),
+    }
 
     if !empty($metrics_server_type) {
       $metrics_command = "${base_metrics_command} ${metrics_shipping_command} > /dev/null"

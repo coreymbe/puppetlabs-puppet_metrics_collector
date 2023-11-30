@@ -66,7 +66,7 @@
 #   Port to connect to bolt on. Default: '62658'
 # 
 # @param metrics_server_type
-# Optional Enum['splunk_hec']: The metrics server type to send data to. Default: undef
+# Optional Enum['datadog', 'splunk_hec']: The metrics server type to send data to. Default: undef
 # 
 # @ param metrics_server_hostname
 # Optional String: The hostname of the metrics server to send data to. Default: undef
@@ -139,7 +139,7 @@ class puppet_metrics_collector (
   Optional[Array[String]] $ace_excludes                = undef,
   Optional[Array[String]] $bolt_excludes               = undef,
   Optional[Array[String]] $activemq_excludes           = undef,
-  Optional[Enum['influxdb', 'graphite', 'splunk_hec']] $metrics_server_type = undef,
+  Optional[Enum['datadog', 'influxdb', 'graphite', 'splunk_hec']] $metrics_server_type = undef,
   Optional[String]        $metrics_server_hostname     = undef,
   Optional[Integer]       $metrics_server_port         = undef,
   Optional[String]        $metrics_server_db_name      = undef,

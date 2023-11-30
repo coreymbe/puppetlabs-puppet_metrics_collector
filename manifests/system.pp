@@ -38,7 +38,7 @@ class puppet_metrics_collector::system (
   Boolean $manage_sysstat            = false,
   Boolean $manage_vmware_tools       = false,
   String  $vmware_tools_pkg          = 'open-vm-tools',
-  Optional[Enum['influxdb', 'graphite', 'splunk_hec']] $metrics_server_type = getvar('puppet_metrics_collector::metrics_server_type'),
+  Optional[Enum['datadog', 'influxdb', 'graphite', 'splunk_hec']] $metrics_server_type = getvar('puppet_metrics_collector::metrics_server_type'),
   Optional[String] $metrics_server_hostname   = getvar('puppet_metrics_collector::metrics_server_hostname'),
   Optional[Integer] $metrics_server_port      = getvar('puppet_metrics_collector::metrics_server_port'),
   Optional[String] $metrics_server_db_name    = getvar('puppet_metrics_collector::metrics_server_db_name'),
@@ -74,16 +74,19 @@ class puppet_metrics_collector::system (
     refreshonly => true,
   }
 
-  $metrics_shipping_command = if $metrics_server_type == 'splunk_hec' {
-    join(['--print |',
-        '/opt/puppetlabs/bin/puppet',
-        'splunk_hec',
-        '--sourcetype puppet:metrics',
-        '--pe_metrics',
-    ], ' ')
-  }
-  else {
-    ''
+  $metrics_shipping_command = $metrics_server_type ? {
+    'datadog'   => join(['--print |',
+                    '/opt/puppetlabs/bin/puppet',
+                    'datadog_agent',
+                    '--pe_metrics',
+                    ], ' '),
+    'splunk_hec' => join(['--print |',
+                    '/opt/puppetlabs/bin/puppet',
+                    'splunk_hec',
+                    '--sourcetype puppet:metrics',
+                    '--pe_metrics',
+                    ], ' '),
+    default      => '',
   }
 
   if $manage_sysstat {
